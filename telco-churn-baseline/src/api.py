@@ -72,12 +72,7 @@ def _records_to_dataframe(records: List[CustomerRecord]) -> pd.DataFrame:
     for r in records:
         d = r.model_dump(by_alias=True)
         # Ensure all expected columns exist
-        row = {}
-        for c in (CATEGORICAL_COLS + NUMERIC_COLS):
-            if c in d:
-                row[c] = d[c]
-            else:
-                row[c] = None
+        row = {c: d[c] if c in d else None for c in (CATEGORICAL_COLS + NUMERIC_COLS)}
         rows.append(row)
     df = pd.DataFrame(rows)
     # Basic cleaning to match training preprocessing assumptions
