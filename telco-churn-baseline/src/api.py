@@ -2,6 +2,7 @@
 import os
 import joblib
 import pandas as pd
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
 from typing import List, Optional
@@ -14,13 +15,12 @@ PREPROCESSOR_PATH = PREP_DIR / "baseline_preprocessor.joblib"
 DEFAULT_MODEL_NAME = os.getenv("MODEL_NAME", "logreg_platt.joblib")
 MODEL_PATH = MODELS_DIR / DEFAULT_MODEL_NAME
 
-app = FastAPI(title="Telco Churn Prediction API", version="1.0.0")
-
 preprocessor = None
 model = None
 
-@app.on_event("startup")
-def load_artifacts():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
     global preprocessor, model
     if not PREPROCESSOR_PATH.exists():
         raise RuntimeError(f"Preprocessor not found at {PREPROCESSOR_PATH}. Train the model first.")
@@ -28,6 +28,10 @@ def load_artifacts():
         raise RuntimeError(f"Model not found at {MODEL_PATH}. Train the model first.")
     preprocessor = joblib.load(PREPROCESSOR_PATH)
     model = joblib.load(MODEL_PATH)
+    yield
+    # Shutdown (cleanup if needed)
+
+app = FastAPI(title="Telco Churn Prediction API", version="1.0.0", lifespan=lifespan)
 
 @app.get("/health")
 def health():

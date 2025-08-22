@@ -1,6 +1,6 @@
 import joblib
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timezone
 from .config import DATA_PATH, MODELS_DIR, PREP_DIR, REPORTS_DIR, ID_COL
 from .preprocess import load_and_select
 from .data_schema import CATEGORICAL_COLS, NUMERIC_COLS
@@ -16,7 +16,7 @@ def main(model_name: str = "logreg_platt.joblib"):
     out = df[[ID_COL]].copy()
     out["churn_risk_score"] = probs
     out = out.sort_values("churn_risk_score", ascending=False)
-    out_path = REPORTS_DIR / f"batch_scores_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.csv"
+    out_path = REPORTS_DIR / f"batch_scores_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.csv"
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out.to_csv(out_path, index=False)
     print(f"Saved scores to {out_path}")
